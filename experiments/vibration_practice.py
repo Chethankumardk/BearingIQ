@@ -1,3 +1,8 @@
+# ============================================================
+# BearingIQ — Vibration Practice
+# Learning exercise (synthetic data, not bearing measurements)
+# ============================================================
+
 import numpy as np
 import matplotlib.pyplot as plt
 

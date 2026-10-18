@@ -1,3 +1,8 @@
+# ============================================================
+# BearingIQ — Rms Practice
+# Learning exercise (synthetic data, not bearing measurements)
+# ============================================================
+
 import numpy as np
 
 acceleration = np.array([2, -3, 4, -2, 3])

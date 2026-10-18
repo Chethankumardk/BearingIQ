@@ -1,3 +1,8 @@
+# ============================================================
+# BearingIQ — Repeatability Practice
+# Learning exercise (synthetic data, not bearing measurements)
+# ============================================================
+
 import numpy as np
 
 amplitudes = np.array([1.00, 1.03, 0.98, 1.02, 0.99])

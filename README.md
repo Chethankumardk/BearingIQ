@@ -1,76 +1,92 @@
-# BearingIQ — Physics-Informed Bearing Condition Monitoring
+# BearingIQ — Bearing Vibration Analysis and Condition Monitoring
 
-**Mechanical Engineering | Vibration Analysis | Python | FFT | Condition Monitoring**
+**Python | Mechanical Engineering | Vibration Analysis | FFT | Bearing Fault Diagnosis**
 
-## Project Overview
+## About the Project
 
-BearingIQ is a Python-based engineering analytics project that investigates rolling-element bearing condition using real vibration measurements and bearing fault-frequency calculations.
+BearingIQ is a Python project I developed to analyze vibration measurements from healthy and damaged rolling-element bearings.
 
-The project combines mechanical engineering fundamentals, signal processing, numerical analysis, data-quality validation, and an exploratory diagnostic decision rule to distinguish selected healthy and outer-ring-damaged bearing recordings.
+I used the Paderborn University bearing dataset to investigate how bearing damage affects vibration signals and whether characteristic bearing fault frequencies can help identify outer-ring damage.
 
-The central engineering question is:
+The main focus was to understand the mechanical behavior behind the vibration signals, apply signal-processing techniques, and compare the results with theoretical bearing fault frequencies.
 
-**Can a physically derived bearing fault-frequency signature provide a more informative indication of outer-ring damage than general vibration statistics alone?**
+I also developed a simple diagnostic method based on the FFT amplitude near the fourth harmonic of the outer-ring fault frequency.
 
-## Engineering Problem
+## 1. Problem and Approach
 
-Rolling-element bearings are critical components in rotating machinery. Localized defects can generate repetitive mechanical impacts as rolling elements pass over damaged surfaces.
+Bearings are widely used in motors, gearboxes and other rotating machinery. When a bearing develops localized damage, contact between the rolling elements and the damaged surface can produce repeated vibration impulses.
 
-These impacts may produce characteristic vibration frequencies related to bearing geometry and shaft rotational speed.
+These impulses may appear as characteristic frequencies in the vibration spectrum.
 
-General vibration indicators, such as RMS and peak amplitude, do not always provide a clear distinction between healthy and damaged bearings.
+I started by comparing basic vibration measurements such as RMS, peak amplitude and crest factor. However, the healthy bearing did not always have lower overall vibration levels than the damaged bearing.
 
-BearingIQ therefore investigates whether frequency-domain features derived from bearing kinematics can support condition assessment.
+This showed why general vibration magnitude alone may not be enough to identify a specific bearing fault.
 
-## Dataset
+I therefore calculated the theoretical outer-ring fault frequency and checked whether the measured vibration spectrum contained corresponding frequency components.
 
-**Source:** Paderborn University Bearing Data Center
+## 2. Dataset and Operating Conditions
 
-**Reference:** Lessmeier et al. (2016), *Condition Monitoring of Bearing Damage in Electromechanical Drive Systems by Using Motor Current Signals of Electric Motors: A Benchmark Data Set for Data-Driven Classification.*
+I used real bearing vibration measurements from the **Paderborn University Bearing Data Center**.
 
-Selected bearings:
+The main comparison uses two bearings:
 
-| Bearing | Condition |
+| Bearing ID | Condition |
 |---|---|
-| K002 | Healthy reference |
-| KA04 | Real outer-ring fatigue damage |
+| K002 | Healthy bearing |
+| KA04 | Bearing with real outer-ring fatigue damage |
 
-Selected operating condition:
+I also inspected K001 as an additional healthy reference during the initial analysis.
 
-- Shaft speed: 900 rpm
-- Load torque: 0.7 Nm
-- Radial force: 1,000 N
-- Nominal vibration sampling frequency: 64 kHz
-- Measurement duration: approximately 4 seconds
+All measurements used for the main comparison were taken under the same nominal operating condition.
 
-The original MATLAB recordings are loaded using SciPy.
+| Parameter | Value |
+|---|---|
+| Shaft speed | 900 rpm |
+| Load torque | 0.7 Nm |
+| Radial force | 1,000 N |
+| Nominal sampling frequency | 64 kHz |
+| Recording duration | Approximately 4 seconds |
 
-Raw dataset files are excluded from this repository and must be obtained separately from the original dataset provider.
+The dataset is provided in MATLAB `.mat` format. I used SciPy to extract the vibration channel and its associated timestamps.
 
-## Engineering Methodology
+The original measurement files are not included in this repository.
 
-### 1. Measurement Inspection and Data Quality
+**Dataset reference:** Lessmeier et al. (2016), *Condition Monitoring of Bearing Damage in Electromechanical Drive Systems by Using Motor Current Signals of Electric Motors: A Benchmark Data Set for Data-Driven Classification.*
 
-The project examines vibration sample counts, recording durations, timestamp monotonicity, sampling-interval deviations and measurement consistency.
+## 3. Vibration Data Inspection
 
-Some recordings contain slightly different sample counts despite approximately four-second durations. The analysis uses the documented nominal sampling frequency of 64 kHz and records this as a limitation.
+Before performing the FFT analysis, I inspected the measurement files to understand their structure and check the recorded data.
 
-### 2. Time-Domain Vibration Analysis
+This included checking:
 
-The following features are calculated:
+- Available measurement channels and vibration samples
+- Number of samples and recording duration
+- Timestamp intervals and sampling consistency
+- Mean, RMS, absolute peak amplitude and crest factor
 
-- Mean
-- Root Mean Square (RMS)
-- Absolute peak amplitude
-- Crest factor
+Some recordings had slightly different sample counts despite having approximately four-second durations. I also found a small number of unusual timestamp intervals.
 
-These features provide general information about vibration magnitude and impulsiveness.
+For the FFT calculations, I used the dataset's documented nominal sampling frequency of 64 kHz. The timestamp differences remain a limitation of the current analysis.
 
-However, they are not necessarily specific to a particular bearing failure mechanism.
+## 4. Time-Domain Vibration Comparison
 
-### 3. Bearing Fault-Frequency Calculation
+I first plotted the vibration signals from K002 and KA04 over a 0.1-second interval.
 
-The Ball Pass Frequency of the Outer Race (BPFO) is estimated from bearing geometry and shaft speed:
+![Healthy and damaged bearing vibration signals](results/figures/vibration_healthy_vs_damaged.png)
+
+The healthy bearing showed several large instantaneous vibration peaks. The damaged bearing had a different vibration pattern, but its largest peaks were not necessarily higher.
+
+This was an important observation because a high peak amplitude does not automatically indicate a damaged bearing.
+
+The time-domain signals were useful for examining the measured vibration behavior, but they did not clearly identify the type of bearing fault.
+
+## 5. Bearing Fault-Frequency Calculation
+
+To connect the vibration analysis with bearing mechanics, I calculated the theoretical Ball Pass Frequency of the Outer Race (BPFO).
+
+The BPFO describes how frequently rolling elements pass a fixed location on the outer race, based on the bearing geometry and shaft speed.
+
+The equation is:
 
 \[
 BPFO = \frac{Z}{2} f_r \left(1-\frac{d}{D}\cos\theta\right)
@@ -78,118 +94,205 @@ BPFO = \frac{Z}{2} f_r \left(1-\frac{d}{D}\cos\theta\right)
 
 Where:
 
-- \(Z\): number of rolling elements
-- \(f_r\): shaft rotational frequency
-- \(d\): rolling-element diameter
-- \(D\): pitch diameter
-- \(\theta\): contact angle
+- \(Z\) = number of rolling elements
+- \(f_r\) = shaft rotational frequency
+- \(d\) = rolling-element diameter
+- \(D\) = pitch diameter
+- \(\theta\) = contact angle
 
-For the selected damaged-bearing geometry and operating speed, the theoretical BPFO is approximately **45.81 Hz**.
+For the selected bearing geometry, I used:
 
-### 4. Frequency-Domain Analysis
+| Parameter | Value |
+|---|---|
+| Number of rolling elements | 8 |
+| Ball diameter | 6.75 mm |
+| Pitch diameter | 28.55 mm |
+| Contact angle | 0° |
+| Shaft rotational frequency | 15 Hz |
 
-The vibration signals are processed using:
+The calculated BPFO was approximately **45.81 Hz**.
 
-- Mean removal
-- Hann windowing
-- Real-valued Fast Fourier Transform (FFT)
-- One-sided amplitude-spectrum calculation
+I then used this frequency to identify the expected locations of its harmonics in the vibration spectrum.
 
-The measured damaged-bearing spectrum contains peaks close to multiple harmonics of the theoretical BPFO.
+## 6. FFT Analysis
 
-### 5. Physics-Informed Diagnostic Feature
+I used NumPy to calculate the Fast Fourier Transform of the vibration measurements.
 
-The fourth BPFO harmonic, approximately **183.24 Hz**, was selected as an exploratory diagnostic feature because it exhibited strong separation in the initial comparison.
+Before calculating the FFT, I removed the mean value and applied a Hann window to reduce spectral leakage. I then calculated the one-sided amplitude spectrum with window-amplitude correction.
 
-The maximum FFT amplitude within ±2 Hz of the target frequency is extracted.
+I compared the healthy and damaged bearing spectra over the frequency range from 0 to 500 Hz.
 
-### 6. Repeatability and Held-Out Evaluation
+![FFT comparison with theoretical BPFO harmonics](results/figures/fft_healthy_vs_damaged.png)
 
-Recordings 1, 3, 4 and 5 were used for exploratory threshold selection.
+The damaged bearing showed several clear peaks close to the theoretical BPFO harmonics.
 
-Recording 6 from each bearing was reserved for a held-out evaluation.
-
-Recording 2 was excluded pending further investigation of sample-count and timestamp behavior.
-
-The decision threshold was selected midway between the maximum healthy and minimum damaged feature amplitudes in the calibration recordings.
-
-This threshold is an exploratory, data-derived boundary rather than a validated industrial alarm limit.
-
-## Results
-
-### BPFO Harmonic Verification
-
-The measured spectral peaks in the damaged bearing closely matched the theoretical BPFO harmonics.
-
-For example:
-
-| Harmonic | Predicted frequency | Measured frequency |
+| BPFO harmonic | Theoretical frequency | Measured frequency (KA04) |
 |---|---:|---:|
 | 1× | 45.81 Hz | 46.00 Hz |
 | 2× | 91.62 Hz | 91.75 Hz |
 | 3× | 137.43 Hz | 137.50 Hz |
 | 4× | 183.24 Hz | 183.50 Hz |
+| 5× | 229.05 Hz | 229.25 Hz |
+| 6× | 274.86 Hz | 275.25 Hz |
 
-### Repeatability
+The measured frequencies were close to the predicted values.
 
-At the fourth BPFO harmonic:
+The healthy bearing generally had much lower amplitudes around these frequencies.
 
-| Metric | K002 healthy | KA04 damaged |
+This provided a more specific indication of outer-ring damage than comparing overall vibration magnitude alone.
+
+## 7. Diagnostic Feature Selection
+
+After comparing the BPFO harmonics, I selected the fourth harmonic as the main diagnostic feature.
+
+Its theoretical frequency is approximately **183.24 Hz**.
+
+For each recording, I extracted the maximum FFT amplitude within ±2 Hz of this frequency.
+
+The fourth harmonic was selected because it showed strong separation between the two bearings in the initial analysis. It was an exploratory choice based on the available measurements, not a feature validated across a larger bearing population.
+
+For recording 1, the extracted amplitudes were:
+
+| Bearing | Fourth-BPFO-harmonic amplitude |
+|---|---:|
+| K002 — Healthy | 0.001386 |
+| KA04 — Damaged | 0.039767 |
+
+The damaged bearing had approximately 28.7 times the amplitude of the healthy bearing for this recording.
+
+## 8. Repeatability Analysis
+
+I wanted to check whether the difference was consistent across multiple recordings rather than relying on a single measurement.
+
+I used recordings 1, 3, 4 and 5 from each bearing for the calibration analysis.
+
+For each recording, I calculated the fourth-BPFO-harmonic amplitude. I then calculated the mean, sample standard deviation and coefficient of variation.
+
+![Fourth-BPFO-harmonic repeatability](results/figures/bpfo_repeatability.png)
+
+The results were:
+
+| Metric | K002 — Healthy | KA04 — Damaged |
 |---|---:|---:|
-| Mean FFT amplitude | 0.001227 | 0.039004 |
-| Standard deviation | 0.000171 | 0.000577 |
+| Mean amplitude | 0.001227 | 0.039004 |
+| Sample standard deviation | 0.000171 | 0.000577 |
 | Coefficient of variation | 13.89% | 1.48% |
 
-The damaged bearing's mean fourth-harmonic amplitude was approximately **31.8 times higher** than the healthy reference across the four calibration recordings.
+Across these four recordings, the damaged bearing had approximately **31.8 times higher mean fourth-harmonic amplitude** than the healthy bearing.
 
-### Held-Out Evaluation
+The damaged bearing also had a lower coefficient of variation, indicating that this feature was relatively consistent across its selected recordings.
 
-The fixed exploratory threshold was 0.019952 in raw recorded amplitude units.
+This comparison describes repeatability for these two physical bearings under one operating condition.
 
-| Bearing | Held-out amplitude | Decision |
-|---|---:|---|
-| K002 | 0.000921 | Normal |
-| KA04 | 0.037792 | Inspect |
+## 9. Diagnostic Threshold and Held-Out Evaluation
 
-Both held-out recordings produced the expected decisions without adjusting the threshold.
+I developed a simple decision rule using the fourth-BPFO-harmonic amplitude.
 
-### Diagnostic Visualization
+The threshold was calculated as the midpoint between the highest healthy amplitude and the lowest damaged amplitude in the calibration recordings.
 
-![BearingIQ diagnostic comparison](results/figures/bpfo_diagnostic_comparison.png)
+The calculated exploratory threshold was approximately:
 
-The figure shows the separation between healthy and damaged recordings, the exploratory threshold, and the held-out evaluation boundary.
+**0.019953 — raw recorded amplitude units**
 
-## Engineering Interpretation
+The decision rule was:
 
-The results demonstrate that a vibration feature tied to the expected outer-ring fault frequency can provide stronger separation for the selected recordings than overall RMS alone.
+- Amplitude above the threshold: **Inspect**
+- Amplitude at or below the threshold: **Normal**
 
-The observed harmonic structure is physically consistent with repetitive impacts caused by a localized outer-ring defect.
+I kept recording 6 from each bearing separate from threshold selection and used it for a held-out evaluation.
 
-This supports a physics-informed approach to vibration-based condition monitoring.
+![BearingIQ diagnostic threshold and held-out evaluation](results/figures/bpfo_diagnostic_comparison.png)
 
-## Limitations
+The held-out results were:
 
-- Only two physical bearings were used in the primary comparison.
-- The analysis considers one nominal operating condition.
-- The diagnostic threshold was selected using the available calibration recordings and is not an industrial alarm threshold.
-- Held-out recordings originate from the same physical bearings, so the evaluation does not establish generalization to unseen bearings.
-- Some recordings show sample-count differences and timestamp irregularities.
-- FFT amplitudes are reported in raw recorded units because the measurement calibration has not been independently verified.
-- Bearing-specific geometry and other physical differences may influence the observed separation.
+| Bearing | Fourth-harmonic amplitude | Expected condition | Decision |
+|---|---:|---|---|
+| K002 | 0.000921 | Normal | Normal |
+| KA04 | 0.037792 | Inspect | Inspect |
 
-## Tools and Technologies
+Both recordings produced the expected decisions without changing the threshold.
 
-- Python
-- NumPy
-- SciPy
-- Matplotlib
-- Git and GitHub
-- Visual Studio Code
-- MATLAB-format engineering measurement data
+However, these measurements came from the same physical bearings used during calibration. This means the test checks the decision rule on additional recordings, not on previously unseen bearings.
 
-## Installation
+## 10. Python Implementation
 
-Clone the repository and create a Python virtual environment.
+I organized the project into reusable functions, analysis scripts and separate learning exercises.
+
+The main Python workflow covers:
+
+1. Loading MATLAB vibration measurements using SciPy
+2. Inspecting signal and timestamp quality
+3. Calculating time-domain vibration features
+4. Calculating theoretical bearing fault frequencies
+5. Performing FFT analysis using NumPy
+6. Extracting BPFO harmonic amplitudes
+7. Evaluating repeatability and calculating the threshold
+8. Testing held-out recordings
+9. Exporting results to CSV and generating figures using Matplotlib
+
+The main analysis scripts are located in `scripts/`, while shared functions are stored in `src/bearing_utils.py`.
+
+The `experiments/` folder contains smaller exercises I used while learning vibration analysis, RMS, FFT, signal-to-noise ratio and statistical repeatability.
+
+## 11. Tools Used
+
+| Tool | How I used it |
+|---|---|
+| Python | Developed the vibration-analysis and condition-monitoring workflow |
+| NumPy | Signal calculations, RMS, statistics and FFT processing |
+| SciPy | Loaded the MATLAB bearing measurement files |
+| Pandas | Read and processed the diagnostic feature table for visualization |
+| Matplotlib | Created time-domain, FFT, repeatability and diagnostic plots |
+| VS Code | Developed and tested the Python scripts |
+| Git and GitHub | Version control, project organization and documentation |
+
+## 12. Project Structure
+
+```text
+BearingIQ/
+├── src/
+│   └── bearing_utils.py
+├── scripts/
+│   ├── bearing_fault_frequency.py
+│   ├── compare_bearings.py
+│   ├── compare_fft.py
+│   ├── inspect_bearing_data.py
+│   ├── repeatability_fft.py
+│   ├── validate_threshold.py
+│   ├── plot_real_vibration.py
+│   ├── plot_repeatability.py
+│   └── plot_diagnostic_results.py
+├── experiments/
+├── data/
+│   └── raw/
+├── results/
+│   ├── diagnostic_features.csv
+│   ├── calibration_threshold.txt
+│   └── figures/
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
+
+The raw measurement files and Python virtual environment are excluded from Git.
+
+## 13. Running the Project
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Chethankumardk/BearingIQ.git
+cd BearingIQ
+```
+
+Create and activate a virtual environment.
+
+For Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
 Install the dependencies:
 
@@ -197,39 +300,48 @@ Install the dependencies:
 python -m pip install -r requirements.txt
 ```
 
-Download the required Paderborn bearing recordings separately and place them under:
+Download the Paderborn bearing dataset separately and place the required recordings in the corresponding bearing folders under `data/raw/`.
 
-```text
-data/raw/K002/
-data/raw/KA04/
-```
+For the main comparison, the project uses recordings from K002 and KA04 under the operating condition `N09_M07_F10`. Some inspection scripts also use K001.
 
-Run the analysis scripts:
+Run the analysis from the project root in the following order:
 
 ```bash
-python compare_fft.py
-python repeatability_fft.py
-python validate_threshold.py
-python plot_diagnostic_results.py
+python -m scripts.compare_bearings
+python -m scripts.compare_fft
+python -m scripts.repeatability_fft
+python -m scripts.validate_threshold
+python -m scripts.plot_real_vibration
+python -m scripts.plot_repeatability
+python -m scripts.plot_diagnostic_results
 ```
 
-The diagnostic figure is saved in:
+The repeatability script generates the diagnostic feature CSV and saves the calibration threshold. The plotting scripts save the figures in `results/figures/`.
 
-```text
-results/figures/
-```
+## 14. Limitations and Next Steps
 
-## Future Improvements
+This is an initial condition-monitoring study using a limited number of measurements.
 
-- Automate feature-table generation directly from the source recordings.
-- Investigate acquisition timestamp irregularities in greater detail.
-- Expand validation to additional healthy and damaged physical bearings.
-- Evaluate multiple operating speeds and loads.
-- Investigate envelope analysis and additional fault-frequency features.
-- Develop a threshold calibrated using healthy reference measurements and evaluated on independent bearing-level test cases.
+The main limitations are:
 
-## Engineering Conclusion
+- The primary comparison uses only two physical bearings.
+- All main recordings were taken at one nominal operating condition.
+- The fourth BPFO harmonic was selected after examining the initial measurements.
+- The threshold was calculated using both healthy and damaged calibration recordings.
+- The held-out evaluation does not demonstrate performance on independent bearings.
+- Some measurement files have sample-count or timestamp irregularities that need further investigation.
+- The vibration amplitudes are reported in raw recorded units because the complete measurement calibration has not been independently verified.
 
-BearingIQ demonstrates a reproducible introductory workflow for vibration-based bearing condition assessment, connecting bearing kinematics, measured vibration signals, Python signal processing, exploratory feature extraction, and engineering decision-making.
+The next improvements would be to test additional physical bearings, evaluate different operating conditions, investigate envelope analysis and assess how well the diagnostic features work on independent measurements.
 
-The project illustrates how mechanical engineering knowledge can guide data analysis and produce physically interpretable condition-monitoring features.
+## 15. What I Learned
+
+This project helped me connect mechanical engineering calculations with real vibration data.
+
+The main lesson was that vibration magnitude alone does not always explain bearing condition. The healthy bearing could show larger instantaneous peaks, while the damaged bearing had stronger frequency components near the expected outer-ring fault harmonics.
+
+By calculating the theoretical BPFO first and then checking the measured spectrum, I could interpret the FFT results using the bearing's mechanical behavior rather than relying only on general signal statistics.
+
+I also gained practical experience with MATLAB measurement files, Python signal processing, data-quality checks, repeatability analysis, Git and technical documentation.
+
+The result is a working introductory bearing condition-monitoring workflow that I can extend and test with more independent measurements.

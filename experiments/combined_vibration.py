@@ -1,3 +1,8 @@
+# ============================================================
+# BearingIQ — Combined Vibration
+# Learning exercise (synthetic data, not bearing measurements)
+# ============================================================
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import rfft, rfftfreq

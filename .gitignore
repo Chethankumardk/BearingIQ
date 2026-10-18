@@ -1,12 +1,7 @@
-# Python environment
 .venv/
 __pycache__/
 *.pyc
-
-# Raw bearing measurement datasets
 data/raw/
-
-# Temporary files
 *.log
 .ipynb_checkpoints/
 .vscode/
