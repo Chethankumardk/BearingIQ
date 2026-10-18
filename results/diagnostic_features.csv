@@ -1,0 +1,12 @@
+
+bearing_id,condition,recording,amplitude_4x_bpfo,dataset_split
+K002,healthy,1,0.001386,calibration
+K002,healthy,3,0.001075,calibration
+K002,healthy,4,0.001085,calibration
+K002,healthy,5,0.001364,calibration
+K002,healthy,6,0.000921,held_out
+KA04,outer_ring_damage,1,0.039767,calibration
+KA04,outer_ring_damage,3,0.039132,calibration
+KA04,outer_ring_damage,4,0.038519,calibration
+KA04,outer_ring_damage,5,0.038597,calibration
+KA04,outer_ring_damage,6,0.037792,held_out

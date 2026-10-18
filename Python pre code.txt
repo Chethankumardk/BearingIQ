@@ -1,0 +1,10 @@
+cd D:\Engineering_Portfolio\BearingIQ
+code .
+
+
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe --version
+
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
